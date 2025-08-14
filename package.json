@@ -8,7 +8,8 @@
   "main": "server/index.ts",
 "scripts": {
   "build": "tsc",
-  "server": "ts-node-esm server/index.ts"
+  "server": "node --loader ts-node/esm server/index.ts"
+  
 
 },
   "dependencies": {
