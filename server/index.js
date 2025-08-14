@@ -37,10 +37,20 @@ const TokenSchema = z.object({
 /** Create a Room */
 app.post('/rooms', async (req, res) => {
   try {
-    const data = RoomSchema.parse(req.body);
+    console.log('Creating room with data:', req.body);
+    const data = req.body;
     const { data: room, error } = await supabase
-      .from('rooms')
-      .insert([{ id: nanoid(10), ...data, state: 'scheduled' }])
+    .from('rooms')
+    .insert([{
+    id: nanoid(10),
+    name: data.name,
+    capacity: data.capacity ?? null,
+    start_at: new Date(data.startAt).toISOString(),
+    end_at: new Date(data.endAt).toISOString(),
+    timezone: data.timezone,
+    recurring: data.recurring ?? null,
+    state: 'scheduled'
+  }])
       .select()
       .single();
 
@@ -48,6 +58,7 @@ app.post('/rooms', async (req, res) => {
     res.json(room);
   } catch (error) {
     res.status(400).json({ error: error.message });
+    console.error('Error creating room:', error);
   }
 });
 
