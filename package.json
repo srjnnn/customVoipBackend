@@ -6,12 +6,12 @@
   "author": "",
   "type": "module",
   "main": "server/index.ts",
-"scripts": {
-  "build": "tsc",
-  "server": "node --loader ts-node/esm server/index.ts"
-  
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node --esm server/index.ts"
+  },
 
-},
   "dependencies": {
     "@prisma/client": "^5.2.0",
     "@supabase/supabase-js": "^2.55.0",
@@ -25,8 +25,10 @@
     "zod": "^3.22.2"
   },
   "devDependencies": {
+    "@types/express": "^5.0.3",
     "@types/jsonwebtoken": "^9.0.2",
     "@types/node": "^20.6.0",
+    "@types/sanitize-html": "^2.16.0",
     "@types/ws": "^8.5.5",
     "ts-node": "^10.9.1",
     "typescript": "^5.2.2"
