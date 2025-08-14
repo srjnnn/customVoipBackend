@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",                   // modern JS
+    "module": "ESNext",                   // ESM modules
+    "moduleResolution": "node",           // resolves node modules
+    "rootDir": "server",                  // your TS files location
+    "outDir": "dist",                     // compiled JS goes here
+    "strict": true,                       // strict type checking
+    "esModuleInterop": true,              // for importing CommonJS
+    "skipLibCheck": true,                 
+    "sourceMap": true,                    
+    "declaration": true,                  
+    "declarationMap": true                 
+  },
+  "include": ["server/**/*.ts"]           
+}
