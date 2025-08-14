@@ -12,7 +12,7 @@ const wss = new WebSocketServer({ port: 8080 });
 
 // Enable CORS for frontend
 app.use(cors({
-  origin: 'https://vvhm0318-3000.inc1.devtunnels.ms/', // change to your frontend URL in production
+  origin: 'https://vvhm0318-3000.inc1.devtunnels.ms', // change to your frontend URL in production
   methods: ['GET','POST','PUT','DELETE','OPTIONS'],
   credentials: true
 }));
