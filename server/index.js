@@ -1,13 +1,10 @@
-// import express, { Request, Response } from 'express';
 import express from 'express';
-import type { Request, Response } from 'express'; // type-only import
-
 import jwt from 'jsonwebtoken';
 import { WebSocketServer } from 'ws';
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
 import sanitizeHtml from 'sanitize-html';
-import supabase from './supabase.ts';
+import supabase from './supabase.js'; // make sure supabase file is JS now
 
 const app = express();
 const wss = new WebSocketServer({ port: 8080 });
@@ -29,14 +26,10 @@ const TokenSchema = z.object({
   displayName: z.string().min(1).max(50),
 });
 
-/** Types inferred from Zod */
-type RoomInput = z.infer<typeof RoomSchema>;
-type TokenInput = z.infer<typeof TokenSchema>;
-
 /** Create a Room */
-app.post('/rooms', async (req: Request, res: Response) => {
+app.post('/rooms', async (req, res) => {
   try {
-    const data: RoomInput = RoomSchema.parse(req.body);
+    const data = RoomSchema.parse(req.body);
     const { data: room, error } = await supabase
       .from('rooms')
       .insert([{ id: nanoid(10), ...data, state: 'scheduled' }])
@@ -45,13 +38,13 @@ app.post('/rooms', async (req: Request, res: Response) => {
 
     if (error) throw error;
     res.json(room);
-  } catch (error: any) {
+  } catch (error) {
     res.status(400).json({ error: error.message });
   }
 });
 
 /** Get Room by ID */
-app.get('/rooms/:id', async (req: Request, res: Response) => {
+app.get('/rooms/:id', async (req, res) => {
   const { data: room, error } = await supabase
     .from('rooms')
     .select('*')
@@ -63,9 +56,9 @@ app.get('/rooms/:id', async (req: Request, res: Response) => {
 });
 
 /** Generate JWT Token */
-app.post('/rooms/:id/tokens', async (req: Request, res: Response) => {
+app.post('/rooms/:id/tokens', async (req, res) => {
   try {
-    const data: TokenInput = TokenSchema.parse(req.body);
+    const data = TokenSchema.parse(req.body);
 
     const { data: room, error } = await supabase
       .from('rooms')
@@ -89,13 +82,13 @@ app.post('/rooms/:id/tokens', async (req: Request, res: Response) => {
     );
 
     res.json({ token });
-  } catch (error: any) {
+  } catch (error) {
     res.status(400).json({ error: 'Invalid token data' });
   }
 });
 
 /** Close Room */
-app.post('/rooms/:id/close', async (req: Request, res: Response) => {
+app.post('/rooms/:id/close', async (req, res) => {
   const { data: room, error } = await supabase
     .from('rooms')
     .update({ state: 'closed' })
@@ -109,7 +102,7 @@ app.post('/rooms/:id/close', async (req: Request, res: Response) => {
 
 /** WebSocket Server */
 wss.on('connection', (ws) => {
-  ws.on('message', (message: string | Buffer) => {
+  ws.on('message', (message) => {
     console.log('Received:', message.toString());
     // Optional: broadcast to other clients
   });
