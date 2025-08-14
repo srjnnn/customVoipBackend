@@ -1,13 +1,21 @@
 import express from 'express';
+import cors from 'cors';
 import jwt from 'jsonwebtoken';
 import { WebSocketServer } from 'ws';
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
 import sanitizeHtml from 'sanitize-html';
-import supabase from './supabase.js'; // make sure supabase file is JS now
+import supabase from './supabase.js'; // make sure supabase.js exists
 
 const app = express();
 const wss = new WebSocketServer({ port: 8080 });
+
+// Enable CORS for frontend
+app.use(cors({
+  origin: 'http://localhost:3000', // change to your frontend URL in production
+  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+  credentials: true
+}));
 
 app.use(express.json());
 
