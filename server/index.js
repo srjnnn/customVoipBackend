@@ -1,16 +1,18 @@
 import express from 'express';
 import cors from 'cors';
-import jwt from 'jsonwebtoken';
-import { WebSocketServer } from 'ws';
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
 import sanitizeHtml from 'sanitize-html';
-import supabase from './supabase.js'; // make sure supabase.js exists
+import supabase from './supabase.js'; // make sure supabase.js exports a Supabase client
+import { AccessToken } from 'livekit-server-sdk';
+import dotenv from 'dotenv';
+import { WebSocketServer } from 'ws';
+
+dotenv.config();
 
 const app = express();
-const wss = new WebSocketServer({ port: 8080 });
 
-// Enable CORS for frontend
+// CORS
 app.use(cors({
   origin: 'https://vvhm0318-3000.inc1.devtunnels.ms', // change to your frontend URL in production
   methods: ['GET','POST','PUT','DELETE','OPTIONS'],
@@ -37,28 +39,28 @@ const TokenSchema = z.object({
 /** Create a Room */
 app.post('/rooms', async (req, res) => {
   try {
-    console.log('Creating room with data:', req.body);
-    const data = req.body;
+    const data = RoomSchema.parse(req.body);
+
     const { data: room, error } = await supabase
-    .from('rooms')
-    .insert([{
-    id: nanoid(10),
-    name: data.name,
-    capacity: data.capacity ?? null,
-    start_at: new Date(data.startAt).toISOString(),
-    end_at: new Date(data.endAt).toISOString(),
-    timezone: data.timezone,
-    recurring: data.recurring ?? null,
-    state: 'scheduled'
-  }])
+      .from('rooms')
+      .insert([{
+        id: nanoid(10),
+        name: data.name,
+        capacity: data.capacity ?? null,
+        start_at: new Date(data.startAt).toISOString(),
+        end_at: new Date(data.endAt).toISOString(),
+        timezone: data.timezone,
+        recurring: data.recurring ?? null,
+        state: 'scheduled'
+      }])
       .select()
       .single();
 
     if (error) throw error;
+
     res.json(room);
   } catch (error) {
-    res.status(400).json({ error: error.message });
-    console.error('Error creating room:', error);
+    res.status(400).json({ error: error.message || String(error) });
   }
 });
 
@@ -74,11 +76,12 @@ app.get('/rooms/:id', async (req, res) => {
   res.json(room);
 });
 
-/** Generate JWT Token */
+/** Generate LiveKit Token for Room */
 app.post('/rooms/:id/tokens', async (req, res) => {
   try {
     const data = TokenSchema.parse(req.body);
 
+    // Check if room exists and is open
     const { data: room, error } = await supabase
       .from('rooms')
       .select('*')
@@ -94,15 +97,19 @@ app.post('/rooms/:id/tokens', async (req, res) => {
       allowedAttributes: {},
     });
 
-    const token = jwt.sign(
-      { roomId: req.params.id, role: data.role, identity: sanitizedName },
-      process.env.JWT_SECRET || 'secret',
-      { expiresIn: '15m' }
+    // LiveKit token generation
+    const at = new AccessToken(
+      process.env.LIVEKIT_API_KEY,
+      process.env.LIVEKIT_API_SECRET,
+      { identity: sanitizedName }
     );
 
-    res.json({ token });
+    at.addGrant({ roomJoin: true, room: req.params.id });
+    const livekitToken = at.toJwt();
+
+    res.json({ token: livekitToken, url: process.env.LIVEKIT_URL });
   } catch (error) {
-    res.status(400).json({ error: 'Invalid token data' });
+    res.status(400).json({ error: error.message || String(error) });
   }
 });
 
@@ -115,11 +122,13 @@ app.post('/rooms/:id/close', async (req, res) => {
     .select()
     .single();
 
-  if (error) return res.status(400).json({ error: error.message });
+  if (error) return res.status(400).json({ error: error.message || String(error) });
   res.json(room);
 });
 
-/** WebSocket Server */
+/** Optional WebSocket Server */
+const wss = new WebSocketServer({ port: 8080 });
+
 wss.on('connection', (ws) => {
   ws.on('message', (message) => {
     console.log('Received:', message.toString());
@@ -128,6 +137,5 @@ wss.on('connection', (ws) => {
 });
 
 /** Start Express server */
-app.listen(5000, () => {
-  console.log('Server running on http://localhost:5000');
-});
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
