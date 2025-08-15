@@ -14,7 +14,7 @@ const app = express();
 
 // CORS
 app.use(cors({
-  origin: 'https://vvhm0318-3000.inc1.devtunnels.ms', // change to your frontend URL in production
+  origin: 'http://localhost:3000/', // change to your frontend URL in production
   methods: ['GET','POST','PUT','DELETE','OPTIONS'],
   credentials: true
 }));
